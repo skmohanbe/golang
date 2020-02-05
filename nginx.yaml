@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+data:
+  nginx.conf: |
+    upstream goandjavaapp {
+         server java-svc:8081 weight=70 max_fails=10 fail_timeout=10;
+         server golang-svc:8082 weight=30 max_fails=10 fail_timeout=10;
+    }
+    server {
+         listen       80;
+        server_name  _;
+
+    location / {
+       proxy_pass http://goandjavaapp;
+        }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+        }
+    }
+
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      labels:
+        name: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/ # mount nginx-conf volume to /etc/nginx
+          readOnly: true
+          name: nginx-conf
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf # place ConfigMap `nginx-conf` on /etc/nginx
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+      name: triva
+  name: nginx-svc
+  namespace: default
+spec:
+  externalIPs:
+  - 52.33.187.156
+  ports:
+  - name: https
+    port: 80
+    nodePort: 30082
+    protocol: TCP
+    targetPort: 80
+  selector:
+     name: nginx
+  type: NodePort

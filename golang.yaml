@@ -1,0 +1,37 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: golangtri
+  name: golang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: golangtri
+  template:
+    metadata:
+      labels:
+        name: golangtri
+    spec:
+      containers:
+      - image: ramanmuthu/goapp:3.0
+        name: golang
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+      name: golangtri
+  name: golang-svc
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 8082
+    protocol: TCP
+    targetPort: 8080
+  selector:
+     name: golangtri
+  type: ClusterIP

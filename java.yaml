@@ -1,0 +1,39 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: javatri
+  name: java
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: javatri
+  template:
+    metadata:
+      labels:
+        name: javatri
+    spec:
+      containers:
+      - image: ramanmuthu/javatest:2.0
+        name: java
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+      name: javatri
+  name: java-svc
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 8081
+    protocol: TCP
+    targetPort: 8080
+  selector:
+     name: javatri
+  type: ClusterIP
+
